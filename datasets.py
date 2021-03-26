@@ -13,8 +13,9 @@ transformer = {
         T.ToTensor(),
         T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
     ]),
-    'test': T.Compose([
+    'val': T.Compose([
         T.ToPILImage(),
+        T.Resize((176, 240)),
         T.ToTensor(),
         T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
     ])
@@ -90,7 +91,6 @@ if __name__ == '__main__':
     for im, hm in dataloader:
         with torch.no_grad():
             hm.squeeze_()
-            print(hm.shape)
             hm[hm > 0] = 1
             np.savetxt('temp.txt', hm[0])
             break
