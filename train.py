@@ -19,13 +19,22 @@ trainloader = DataLoader(traindataset, batch_size=cfg.batch_size,
                         pin_memory=cfg.pin_memory, num_workers=cfg.num_workers)
 
 valdataset = TraficDataset('via-trafficsign/images/val', 'via-trafficsign/labels/val', 'val')
-valloader = DataLoader(traindataset, batch_size=cfg.batch_size,
+valloader = DataLoader(valdataset, batch_size=cfg.batch_size,
                         pin_memory=cfg.pin_memory, num_workers=cfg.num_workers)
 device = 'cpu'
 
+# traindataset = TraficDataset('/content/via-trafficsign/images/train', '/content/via-trafficsign/labels/train', 'train')
+# trainloader = DataLoader(traindataset, batch_size=cfg.batch_size,
+#                         pin_memory=cfg.pin_memory, num_workers=cfg.num_workers)
+
+# valdataset = TraficDataset('/content/via-trafficsign/images/val', -'/content/via-trafficsign/labels/val', 'val')
+# valloader = DataLoader(valdataset, batch_size=cfg.batch_size,
+#                         pin_memory=cfg.pin_memory, num_workers=cfg.num_workers)
+# device = 'gpu'
+
 net = Model(VGG)
 
-log_name = 'traffic/training'
+log_name = 'traffic_logs/training'
 logger = TensorBoardLogger(
     save_dir=os.getcwd(),
     name=log_name,
@@ -60,7 +69,7 @@ else:
     trainer = pl.Trainer(
         max_epochs=90,
         logger=logger,
-        callbacks=callbacks
+        callbacks=callbacks,
     )
 
 trainer.fit(net, trainloader, valloader)

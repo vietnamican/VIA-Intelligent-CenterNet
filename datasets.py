@@ -21,6 +21,7 @@ transformer = {
     ])
 }
 
+
 class TraficDataset(Dataset):
     def __init__(self, im_folder, anno_folder, mode='train'):
         super().__init__()
@@ -39,16 +40,19 @@ class TraficDataset(Dataset):
         im = cv2.imread(im_path)
         im = im[2:-2, :]
         im = self.transformer(im)
-        hm = self._make_heatmap(im, boxes)
+        hm = self._make_heatmap(im, cls, boxes)
         return im, hm
 
-    def _make_heatmap(self, im, boxes):
+    def _make_heatmap(self, im, cls, boxes):
         res = np.zeros([3, self.im_height, self.im_width], dtype=np.float32)
 
         grid_x = np.tile(np.arange(self.im_width), reps=(self.im_height, 1))
-        grid_y = np.tile(np.arange(self.im_height), reps=(self.im_width, 1)).transpose()
-        
-        for box in boxes:
+        grid_y = np.tile(np.arange(self.im_height),
+                         reps=(self.im_width, 1)).transpose()
+
+        for cl, box in zip(cls, boxes):
+            if cl == 0:
+                break
             x_ratio, y_ratio, width_ratio, height_ratio = box
             x = round(x_ratio * self.im_width)
             y = round(y_ratio * self.im_height)
@@ -61,7 +65,7 @@ class TraficDataset(Dataset):
 
             res[1][y, x] = np.log(width + 1e-4)
             res[2][y, x] = np.log(height + 1e-4)
-        
+
         return res
 
     def __len__(self):
@@ -72,16 +76,21 @@ class TraficDataset(Dataset):
         anno_extension = 'txt'
         for im_filename in os.listdir(im_folder):
             im_name = im_filename.split('.')[0]
-            full_im_filename = os.path.join(im_folder, im_name + '.' + im_extension)
+            full_im_filename = os.path.join(
+                im_folder, im_name + '.' + im_extension)
             self.im_names.append(full_im_filename)
-            full_anno_filename = os.path.join(anno_folder, im_name + "." + anno_extension)
+            full_anno_filename = os.path.join(
+                anno_folder, im_name + "." + anno_extension)
             with open(full_anno_filename, 'r') as anno_file:
                 lines = anno_file.read()
                 lines = lines.split('\n')
                 nrow = len(lines)
-                annos = np.loadtxt(lines).reshape(nrow, -1)
+                if len(lines[0]) > 0:
+                    annos = np.loadtxt(lines).reshape(nrow, -1)
+                else:
+                    annos = np.array([[0, 0, 0, 0, 0]])
                 self.annos.append(annos)
-        
+
 
 if __name__ == '__main__':
     image_folder = os.path.join('via-trafficsign', 'images', 'train')
