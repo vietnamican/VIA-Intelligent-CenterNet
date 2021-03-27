@@ -2,11 +2,13 @@ import os
 import os.path as osp
 from tqdm import tqdm
 
+import cv2
 import torch
 from torchvision import transforms as T
 from torch.utils.data import DataLoader
 import numpy as np
 from PIL import Image
+import pytorch_lightning as pl
 
 # local imports
 from config import Config as cfg
@@ -29,7 +31,7 @@ recall = AverageMetric()
 
 def load_model():
     net = Model(VGG)
-    checkpoint_path = 'checkpoint-epoch=51-val_loss=0.0034.ckpt'
+    checkpoint_path = 'checkpoint-epoch=37-val_loss=0.0062.ckpt'
     if device == 'cpu':
         checkpoint = torch.load(checkpoint_path, map_location=lambda storage, loc: storage)
     else:
@@ -37,6 +39,7 @@ def load_model():
     state_dict = checkpoint['state_dict']
     net.eval()
     net.migrate(state_dict, force=True, verbose=2)
+    net.release()
     net.eval()
     return net
 
@@ -168,8 +171,14 @@ def decode(out):
     return bboxes[keep_indexes]
 
 
-def visualize(im, bboxes):
-    pass
+def visualize(im_path, bboxes):
+    im = cv2.imread(im_path)
+    im = cv2.resize(im, (240, 176))
+    for bbox in bboxes:
+        left, top,  right, bottom = bbox
+        cv2.rectangle(im, (left, top), (right, bottom), (255,0,0), 2)
+    return im
+
 
 # def manhattan_distance(box1, box2):
 #     center1 = (box1[2] - box1[0], box1[3] - box1[1])
@@ -178,7 +187,7 @@ def visualize(im, bboxes):
 
 def calculate_metrics(pred_bboxes, gt_bboxes):
     # print(len(pred_bboxes))
-    iou_threshold = 0.4
+    iou_threshold = 0.2
     is_occupied = [False]*gt_bboxes.shape[0]
     pred_index = []
     gt_index = []
@@ -199,44 +208,48 @@ def calculate_metrics(pred_bboxes, gt_bboxes):
             gt_index.append(closest_index)
     return result, pred_index, gt_index
 
-if not os.path.isdir('result189'):
-    os.mkdir('result189')
+if not os.path.isdir('result'):
+    os.mkdir('result')
 
 if __name__ == '__main__':
-    net = load_model()
-    # i = 0
-    for im, labels, bboxes in tqdm(trainloader):
+    pl.seed_everything(42)
 
-        # try:
-            # i += 1
-            # if i == 10:
-            #     break
-        # print(labels[0])
-        # for line in labels[0,0]:
-        #     line[line < cfg.threshold] = 0
-        #     print(line)
-        x_ratio, y_ratio, width_ratio, height_ratio = bboxes[..., 0], bboxes[..., 1], bboxes[..., 2], bboxes[..., 3]
-        x = np.round(x_ratio * valdataset.im_width)
-        y = np.round(y_ratio * valdataset.im_height)
-        width = np.round(width_ratio * valdataset.im_width)
-        height = np.round(height_ratio * valdataset.im_height)
-        left = x - width // 2
-        right = x + width // 2
-        top = y - height // 2
-        bottom = y + height // 2
-        gt_bboxes = np.concatenate([left, top, right, bottom], axis=-1)
-        pred = detect(net, im)
-        bboxes = decode(pred)
-        loss = torch.nn.functional.mse_loss(pred['hm'], labels[0, 0], reduction='sum')
-        print(loss)
-        result, pred_index, gt_index = calculate_metrics(bboxes, gt_bboxes)
-        # print(result)
-        print(result, len(bboxes))
-        print(result, len(gt_bboxes))
-        precision.update(result, len(bboxes))
-        recall.update(result, len(gt_bboxes))
-        break
-        # except:
-        #     pass
+    net = load_model()
+    i = 0
+    for im, labels, im_path, bboxes,in tqdm(valloader):
+        im_path = im_path[0]
+        try:
+            i += 1
+            if i == 100:
+                break
+            # print(labels[0])
+            # for line in labels[0,0]:
+            #     line[line < cfg.threshold] = 0
+            #     print(line)
+            x_ratio, y_ratio, width_ratio, height_ratio = bboxes[..., 0], bboxes[..., 1], bboxes[..., 2], bboxes[..., 3]
+            x = np.round(x_ratio * valdataset.im_width)
+            y = np.round(y_ratio * valdataset.im_height)
+            width = np.round(width_ratio * valdataset.im_width)
+            height = np.round(height_ratio * valdataset.im_height)
+            left = x - width // 2
+            right = x + width // 2
+            top = y - height // 2
+            bottom = y + height // 2
+            gt_bboxes = np.concatenate([left, top, right, bottom], axis=-1)
+            pred = detect(net, im)
+            bboxes = decode(pred)
+            loss = torch.nn.functional.mse_loss(pred['hm'], labels[0, 0], reduction='sum')
+            # print(loss)
+            result, pred_index, gt_index = calculate_metrics(bboxes, gt_bboxes)
+            im = visualize(im_path, bboxes)
+            cv2.imwrite(os.path.join('result/{}.jpg'.format(i),), im)
+            # print(result)
+            # print(result, len(bboxes))
+            # print(result, len(gt_bboxes))
+            precision.update(result, len(bboxes))
+            recall.update(result, len(gt_bboxes))
+            # break
+        except:
+            pass
     print(precision.compute())
     print(recall.compute())

@@ -41,7 +41,7 @@ class TraficDataset(Dataset):
         im = im[2:-2, :]
         im = self.transformer(im)
         hm = self._make_heatmap(im, cls, boxes)
-        return im, hm
+        return im, hm, im_path
 
     def _make_heatmap(self, im, cls, boxes):
         res = np.zeros([3, self.im_height, self.im_width], dtype=np.float32)
@@ -57,6 +57,7 @@ class TraficDataset(Dataset):
             x = round(x_ratio * self.im_width)
             y = round(y_ratio * self.im_height)
             grid_dist = (grid_x - x) ** 2 + (grid_y - y) ** 2
+            grid_dist[grid_dist > x ** 2 + y ** 2] = 0
             heatmap = np.exp(-0.5 * grid_dist / self.sigma ** 2)
             res[0] = np.maximum(heatmap, res[0])
 
