@@ -41,7 +41,7 @@ class TraficDataset(Dataset):
         im = im[2:-2, :]
         im = self.transformer(im)
         hm = self._make_heatmap(im, cls, boxes)
-        return im, hm, boxes
+        return im, hm
 
     def _make_heatmap(self, im, cls, boxes):
         res = np.zeros([3, self.im_height, self.im_width], dtype=np.float32)

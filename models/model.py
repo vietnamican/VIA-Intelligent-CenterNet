@@ -6,14 +6,14 @@ import numpy as np
 
 from .centernet import CenterNet
 from .base import Base
-from .loss import RegLoss, AverageMetric
+from .loss import PointLoss, RegLoss, AverageMetric
 
 
 class Model(CenterNet):
     def __init__(self, base):
         super().__init__(base, {'hm': 1, 'wh': 2})
         self.threshold = 0.4
-        self.heatmap_loss = nn.MSELoss(reduction='sum')
+        self.heatmap_loss = PointLoss()
         self.wh_loss = RegLoss()
 
     def training_step(self, batch, batch_idx):
@@ -26,7 +26,7 @@ class Model(CenterNet):
 
         self.log_dict({'t_heat': l_heatmap,
                        't_size': l_wh}, prog_bar=True)
-        loss = l_heatmap * 0.01 + l_wh * 0.1
+        loss = l_heatmap + l_wh * 0.1
         self.log_dict({'train_loss': loss})
 
         return loss
@@ -41,7 +41,7 @@ class Model(CenterNet):
 
         self.log_dict({'v_heat': l_heatmap,
                        'v_size': l_wh}, prog_bar=False)
-        loss = l_heatmap * 0.01 + l_wh * 0.1
+        loss = l_heatmap + l_wh * 0.1
         self.log_dict({'val_loss': loss})
 
         return loss

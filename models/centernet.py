@@ -26,7 +26,7 @@ def fill_fc_weights(layers):
 
 
 class CenterNet(Base):
-    def __init__(self, base, heads,head_conv=24):
+    def __init__(self, base, heads,head_conv=128):
         super().__init__()
         self.heads = heads
         self.base = base()
