@@ -56,16 +56,19 @@ class TraficDataset(Dataset):
             x_ratio, y_ratio, width_ratio, height_ratio = box
             x = round(x_ratio * self.im_width)
             y = round(y_ratio * self.im_height)
-            grid_dist = (grid_x - x) ** 2 + (grid_y - y) ** 2
-            grid_dist[grid_dist > x ** 2 + y ** 2] = 0
-            heatmap = np.exp(-0.5 * grid_dist / self.sigma ** 2)
-            res[0] = np.maximum(heatmap, res[0])
-
             width = round(width_ratio * self.im_width)
             height = round(height_ratio * self.im_height)
 
+            grid_dist = (grid_x - x) ** 2 + (grid_y - y) ** 2
+            grid_dist[grid_dist > width ** 2 + height ** 2] = 0
+
             res[1][y, x] = np.log(width + 1e-4)
             res[2][y, x] = np.log(height + 1e-4)
+
+            heatmap = np.exp(-0.5 * grid_dist / self.sigma ** 2)
+            res[0] = np.maximum(heatmap, res[0])
+
+            
 
         return res
 

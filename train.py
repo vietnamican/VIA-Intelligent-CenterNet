@@ -13,6 +13,8 @@ from models.model import Model
 from models.backbone.vgg import VGG
 from datasets import TraficDataset
 
+pl.seed_everything(42)
+
 # Data Setup
 traindataset = TraficDataset('via-trafficsign/images/train', 'via-trafficsign/labels/train', 'train')
 trainloader = DataLoader(traindataset, batch_size=cfg.batch_size,
@@ -27,7 +29,7 @@ device = 'cpu'
 # trainloader = DataLoader(traindataset, batch_size=cfg.batch_size,
 #                         pin_memory=cfg.pin_memory, num_workers=cfg.num_workers)
 
-# valdataset = TraficDataset('/content/via-trafficsign/images/val', -'/content/via-trafficsign/labels/val', 'val')
+# valdataset = TraficDataset('/content/via-trafficsign/images/val', '/content/via-trafficsign/labels/val', 'val')
 # valloader = DataLoader(valdataset, batch_size=cfg.batch_size,
 #                         pin_memory=cfg.pin_memory, num_workers=cfg.num_workers)
 # device = 'gpu'
