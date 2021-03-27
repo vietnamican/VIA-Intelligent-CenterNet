@@ -60,12 +60,12 @@ class TraficDataset(Dataset):
             height = round(height_ratio * self.im_height)
 
             grid_dist = (grid_x - x) ** 2 + (grid_y - y) ** 2
-            grid_dist[grid_dist > width ** 2 + height ** 2] = 0
 
             res[1][y, x] = np.log(width + 1e-4)
             res[2][y, x] = np.log(height + 1e-4)
 
             heatmap = np.exp(-0.5 * grid_dist / self.sigma ** 2)
+            heatmap[grid_dist > width ** 2 + height ** 2] = 0
             res[0] = np.maximum(heatmap, res[0])
 
             
