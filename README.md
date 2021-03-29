@@ -22,7 +22,7 @@
 
 - [ ] Demo code.
 
-    - [x] On images.
+    - [ ] On images.
 
     - [ ] On video.
 
