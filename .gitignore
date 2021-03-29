@@ -32,3 +32,4 @@ via-trafficsign/
 *_logs/
 checkpoint*
 result*/
+test.py

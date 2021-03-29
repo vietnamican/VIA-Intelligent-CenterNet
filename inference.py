@@ -162,7 +162,7 @@ if __name__ == '__main__':
     parser.add_argument('--num-workers', type=int,
                         help='number of workers for loading data', default=4)
     parser.add_argument('--checkpoint', type=str,
-                        help='Path to checkpoint to load from', default=None)
+                        help='Path to checkpoint to load from', required=True)
 
     parser.add_argument('--outdir', type=str,
                         help='Directory to save output result', required=True)
