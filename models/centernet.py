@@ -29,7 +29,7 @@ class CenterNet(Base):
     def __init__(self, base, heads,head_conv=128):
         super().__init__()
         self.heads = heads
-        self.base = base()
+        self.base = base
         channels = self.base.channels
         self.fpn = FPN(channels, out_dim=head_conv)
         for head in self.heads:

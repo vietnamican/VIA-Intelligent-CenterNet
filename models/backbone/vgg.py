@@ -41,12 +41,3 @@ class VGG(Base):
         y.append(x)
         y.append(self.feature_4(x))
         return y
-
-    def release(self):
-        is_self = True
-        for module in self.modules():
-            if is_self:
-                is_self = False
-                continue
-            if hasattr(module, 'release'):
-                module.release()
