@@ -35,6 +35,8 @@ if __name__ == '__main__':
                         help='number of workers for loading data', default=4)
     parser.add_argument('--checkpoint', type=str,
                         help='Path to checkpoint to load from', default=None)
+    parser.add_argument(
+        '--backbone', type=str, help="Choose backbone for centernet, one of the ['mobilenet', 'vgg']", default='vgg')
 
     args = parser.parse_args()
 
