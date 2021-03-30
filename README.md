@@ -1,5 +1,5 @@
 # via-trafficsign-detection
-This project ~~classifies~~ detect traffic signs, uses CenterNet with some modify.
+This project ~~classifies~~ detects traffic signs, uses CenterNet with some modify.
 ## Getting started
 These instructions will give you a copy of the project and running on your local machine
 ### Prerequisites
@@ -111,7 +111,7 @@ Example
                           --outdir='result'
 ```
 
-## Demo (Unavailable now)
+## Demo
 ```
     $ python demo.py --image-path=$IMAGE_PATH \
                      --checkpoint=$CHECKPOINT \
