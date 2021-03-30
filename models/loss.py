@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from torchmetrics import Metric
 
 
 class PointLoss(nn.Module):

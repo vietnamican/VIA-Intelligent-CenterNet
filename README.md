@@ -1,45 +1,39 @@
 # via-trafficsign-detection
+This project ~~classifies~~ detect traffic signs, uses CenterNet with some modify.
+## Getting started
+These instructions will give you a copy of the project and running on your local machine
+### Prerequisites
+- [conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html)
 
-## Progress
+### Installing
+Please execute below commands to install essential packages.
 
-- [x] Data.
+Create a new conda environment with python3.7 initial.
+```
+    $ conda create --name via python=3.7
+    $ conda activate via
+```
+Install torch and torchvision.
 
-- [x] Backbone.
+If you don't have gpu.
+```
+    (via) $ conda install pytorch==1.7.1 torchvision==0.8.2 cpuonly -c pytorch
+```
+Or if you have gpu.
+Please visit [this](https://docs.nvidia.com/cuda/) and [this](https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html) to install appropriate version of cuda and cudnn, respectively.
 
-    - [x] VGG-like.
+Then, run below command.
+```
+    (via) $ conda install pytorch==1.7.1 torchvision==0.8.2 -c pytorch 
+```
+Install other essential packages.
 
-    - [x] MobilenetV2.
-
-- [x] Pretrained
-
-    - [x] VGG-like.
-
-    - [ ] MobilenetV2.
-
-- [x] Training code.
-
-- [x] Inference code.
-
-- [ ] Demo code.
-
-    - [ ] On images.
-
-    - [ ] On video.
-
-## Installaition
-### Requirements
-- python>=3.7
-- torch==1.7.0
-- torchvision==0.8.1
-
-### Install packages
-Please execute below command to install essential packages
 ```
     $ conda install --file requirements.txt
 ```
 
 ## Dataset
-Please access to this [link](https://github.com/makerhanoi/via-datasets) and follow instructions to download via-trafficsign dataset. Extract and put it in the project root directory.
+Please visit this [link](https://github.com/makerhanoi/via-datasets) and follow instructions to download via-trafficsign dataset. Extract and put it in the project root directory.
 
 ### Train on your own dataset
 See [this](readme/train_custom_dataset.md)
@@ -140,3 +134,34 @@ Download pretrained-models and put it in ```archives/``` directory.
 ## Result
 ![alt text](assets/result.png)
 
+## Progress
+
+- [x] Detection.
+
+- [ ] Classification.
+
+- [x] Data.
+
+- [x] Backbone.
+
+    - [x] VGG-like.
+
+    - [x] MobilenetV2.
+
+- [x] Pretrained
+
+    - [x] VGG-like.
+
+    - [ ] MobilenetV2.
+
+- [x] Training code.
+    - [x] via-trafficsign dataset.
+    - [ ] instruction for custom dataset.
+
+- [x] Inference code.
+
+- [ ] Demo code.
+
+    - [x] On images.
+
+    - [ ] On video.
