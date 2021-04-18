@@ -10,6 +10,7 @@ import pytorch_lightning as pl
 class Base(pl.LightningModule):
     def __init__(self):
         super(Base, self).__init__()
+        self.is_released = False
 
     def remove_num_batches_tracked(self, state_dict):
         new_state_dict = {}
@@ -120,6 +121,39 @@ class ConvBatchNormRelu6(Base):
     def forward(self, x):
         return self.cbr(x)
 
+    def _fuse_bn_tensor(self):
+        kernel = self.cbr.conv.weight
+        bias = self.cbr.conv.bias
+        if bias is None:
+            bias = 0
+        running_mean = self.cbr.bn.running_mean
+        running_var = self.cbr.bn.running_var
+        gamma = self.cbr.bn.weight
+        beta = self.cbr.bn.bias
+        eps = self.cbr.bn.eps
+        return kernel * (gamma / (running_var + eps).sqrt()).reshape(-1, 1, 1, 1), beta + gamma / (running_var + eps).sqrt() * (bias - running_mean)
+
+    def _release(self):
+        if self.with_bn:
+            self.kwargs['bias'] = True
+            kernel, bias = self._fuse_bn_tensor()
+            conv = nn.Conv2d(*(self.args), **(self.kwargs))
+            with torch.no_grad():
+                conv.weight.copy_(kernel)
+                conv.bias.copy_(bias)
+            if self.with_relu:
+                self.cbr = nn.Sequential()
+                self.cbr.add_module('conv', conv)
+                self.cbr.add_module('relu', nn.ReLU6(inplace=True))
+            else:
+                self.cbr = nn.Sequential()
+                self.cbr.add_module('conv', conv)
+
+    def release(self):
+        if not self.is_released:
+            self.is_released = True
+            self._release()
+
 
 class VGGBlock(Base):
 
@@ -163,3 +197,63 @@ class VGGBlock(Base):
 
     def forward(self, x):
         return self._forward(x)
+
+    def _fuse_bn_tensor(self, branch):
+        if isinstance(branch, nn.Sequential):
+            kernel = branch[0].weight
+            running_mean = branch.bacthnorm.running_mean
+            running_var = branch.bacthnorm.running_var
+            gamma = branch.bacthnorm.weight
+            beta = branch.bacthnorm.bias
+            eps = branch.bacthnorm.eps
+        elif isinstance(branch, nn.BatchNorm2d):
+            kernel = torch.zeros(self.inplanes, self.inplanes, 3, 3)
+            for i in range(self.inplanes):
+                kernel[i, i, 1, 1] = 1
+            running_mean = branch.running_mean
+            running_var = branch.running_var
+            gamma = branch.weight
+            beta = branch.bias
+            eps = branch.eps
+        return kernel * (gamma / (running_var + eps).sqrt()).reshape(-1, 1, 1, 1), beta - gamma / (running_var + eps).sqrt() * running_mean
+
+    def get_equivalent_kernel_bias(self):
+        kernel3x3, bias3x3 = self.conv1.cbr.conv.weight, self.conv1.cbr.conv.bias
+        kernel1x1, bias1x1 = self.identity_layer.cbr.conv.weight, self.identity_layer.cbr.conv.bias
+        if self.skip_layer is not None:
+            kernelskip, biasskip = self._fuse_bn_tensor(self.skip_layer)
+        else:
+            kernelskip, biasskip = 0, 0
+
+        kernel = kernel3x3 + F.pad(kernel1x1, [1, 1, 1, 1]) + kernelskip
+        bias = bias3x3 + bias1x1 + biasskip
+        conv = nn.Conv2d(
+            self.inplanes, self.planes, 3, stride=self.stride, padding=1)
+        with torch.no_grad():
+            conv.weight.copy_(kernel)
+            conv.bias.copy_(bias)
+        self.forward_path = conv
+
+    def _release(self):
+        self.get_equivalent_kernel_bias()
+
+        def _forward(self, x):
+            return self.relu(self.forward_path(x))
+        self._forward = partial(_forward, self)
+
+        delattr(self, 'conv1')
+        delattr(self, 'identity_layer')
+        if hasattr(self, 'skip_layer'):
+            delattr(self, 'skip_layer')
+
+    def release(self):
+        if not self.is_released:
+            self.is_released = True
+            is_self = True
+            for module in self.modules():
+                if is_self:
+                    is_self = False
+                    continue
+                if hasattr(module, 'release'):
+                    module.release()
+            self._release()

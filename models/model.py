@@ -62,3 +62,12 @@ class Model(CenterNet):
         lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
             optimizer, milestones=[50, 100], gamma=0.1)
         return {'optimizer': optimizer, 'lr_scheduler': lr_scheduler}
+
+    def release(self):
+        is_self = True
+        for module in self.modules():
+            if is_self:
+                is_self = False
+                continue
+            if hasattr(module, 'release'):
+                module.release()

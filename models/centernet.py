@@ -6,6 +6,7 @@ import math
 from .base import Base
 from .layers import FPN
 
+
 def fill_up_weights(up):
     w = up.weight.data
     f = math.ceil(w.size(2) / 2)
@@ -17,6 +18,7 @@ def fill_up_weights(up):
     for c in range(1, w.size(0)):
         w[c, 0, :, :] = w[0, 0, :, :]
 
+
 def fill_fc_weights(layers):
     for m in layers.modules():
         if isinstance(m, nn.Conv2d):
@@ -26,7 +28,7 @@ def fill_fc_weights(layers):
 
 
 class CenterNet(Base):
-    def __init__(self, base, heads,head_conv=128):
+    def __init__(self, base, heads, head_conv=128):
         super().__init__()
         self.heads = heads
         self.base = base
@@ -34,9 +36,9 @@ class CenterNet(Base):
         self.fpn = FPN(channels, out_dim=head_conv)
         for head in self.heads:
             classes = self.heads[head]
-            fc =nn.Conv2d(head_conv, classes,
-                          kernel_size=1, stride=1,
-                          padding=0, bias=True)
+            fc = nn.Conv2d(head_conv, classes,
+                           kernel_size=1, stride=1,
+                           padding=0, bias=True)
             if 'hm' in head:
                 fc.bias.data.fill_(-2.19)
             else:
