@@ -66,8 +66,8 @@ if __name__ == '__main__':
         i += 1
         try:
             pred = detect(net, im)
-            bboxes = decode(pred)
-            im = visualize(im_path, bboxes)
+            bboxes, classes = decode(pred)
+            im = visualize(im_path, bboxes, classes)
             cv2.imwrite(os.path.join(outdir, '{}.jpg'.format(i)), im)
         except:
             pass

@@ -63,8 +63,8 @@ if __name__ == '__main__':
     im = transformer(im)
     try:
         pred = detect(net, im)
-        bboxes = decode(pred)
-        im = visualize(im_path, bboxes)
+        bboxes, classes = decode(pred)
+        im = visualize(im_path, bboxes, classes)
         plt.imshow(im[:,:,::-1])
         plt.show()
     except:

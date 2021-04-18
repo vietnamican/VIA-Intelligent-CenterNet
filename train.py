@@ -30,7 +30,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int,
                         help='max epoch for training', default=90)
     parser.add_argument('--batch-size', type=int,
-                        help='batch size for training, recommended greater than or equal to 16', default=32)
+                        help='batch size for training, recommended greater than or equal to 16', default=2)
     parser.add_argument('--num-workers', type=int,
                         help='number of workers for loading data', default=4)
     parser.add_argument('--checkpoint', type=str,

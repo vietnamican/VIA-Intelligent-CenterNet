@@ -40,7 +40,7 @@ class TrafficDataset(Dataset):
 
     def __getitem__(self, idx):
         im_path = self.im_names[idx]
-        cls, boxes = self.annos[idx][:, 0], self.annos[idx][:, 1:5]
+        cls, boxes = self.annos[idx][:, 0].astype(np.int), self.annos[idx][:, 1:5]
         im = cv2.imread(im_path)
         im = im[2:-2, :]
         im = self.transformer(im)
@@ -48,7 +48,7 @@ class TrafficDataset(Dataset):
         return im, hm, im_path
 
     def _make_heatmap(self, im, cls, boxes):
-        res = np.zeros([3, self.im_height, self.im_width], dtype=np.float32)
+        res = np.zeros([8, self.im_height, self.im_width], dtype=np.float32)
 
         grid_x = np.tile(np.arange(self.im_width), reps=(self.im_height, 1))
         grid_y = np.tile(np.arange(self.im_height),
@@ -65,14 +65,12 @@ class TrafficDataset(Dataset):
 
             grid_dist = (grid_x - x) ** 2 + (grid_y - y) ** 2
 
-            res[1][y, x] = np.log(width + 1e-4)
-            res[2][y, x] = np.log(height + 1e-4)
+            res[6][y, x] = np.log(width + 1e-4)
+            res[7][y, x] = np.log(height + 1e-4)
 
             heatmap = np.exp(-0.5 * grid_dist / self.sigma ** 2)
             heatmap[grid_dist > width ** 2 + height ** 2] = 0
-            res[0] = np.maximum(heatmap, res[0])
-
-            
+            res[cl] = np.maximum(heatmap, res[cl])
 
         return res
 

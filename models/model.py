@@ -11,7 +11,7 @@ from .loss import PointLoss, RegLoss
 
 class Model(CenterNet):
     def __init__(self, base):
-        super().__init__(base, {'hm': 1, 'wh': 2})
+        super().__init__(base, {'hm': 6, 'wh': 2})
         self.threshold = 0.4
         self.heatmap_loss = PointLoss()
         self.wh_loss = RegLoss()
@@ -20,9 +20,9 @@ class Model(CenterNet):
         data, labels, *_ = batch
         out = self(data)
         heatmaps = torch.cat([o['hm'].squeeze() for o in out], dim=0)
-        l_heatmap = self.heatmap_loss(heatmaps, labels[:, 0])
+        l_heatmap = self.heatmap_loss(heatmaps, labels[:, 0:6])
         whs = torch.cat([o['wh'].squeeze() for o in out], dim=0)
-        l_wh = self.wh_loss(whs, labels[:, [1, 2]])
+        l_wh = self.wh_loss(whs, labels[:, [6, 7]])
 
         self.log_dict({'t_heat': l_heatmap,
                        't_size': l_wh}, prog_bar=True)
@@ -35,9 +35,9 @@ class Model(CenterNet):
         data, labels, *_ = batch
         out = self(data)
         heatmaps = torch.cat([o['hm'].squeeze() for o in out], dim=0)
-        l_heatmap = self.heatmap_loss(heatmaps, labels[:, 0])
+        l_heatmap = self.heatmap_loss(heatmaps, labels[:, 0:6])
         whs = torch.cat([o['wh'].squeeze() for o in out], dim=0)
-        l_wh = self.wh_loss(whs, labels[:, [1, 2]])
+        l_wh = self.wh_loss(whs, labels[:, [6, 7]])
 
         self.log_dict({'v_heat': l_heatmap,
                        'v_size': l_wh}, prog_bar=False)
@@ -50,9 +50,9 @@ class Model(CenterNet):
         data, labels, *_ = batch
         out = self(data)
         heatmaps = torch.cat([o['hm'].squeeze() for o in out], dim=0)
-        l_heatmap = self.heatmap_loss(heatmaps, labels[:, 0])
+        l_heatmap = self.heatmap_loss(heatmaps, labels[:, 0:6])
         whs = torch.cat([o['wh'].squeeze() for o in out], dim=0)
-        l_wh = self.wh_loss(whs, labels[:, [1, 2]])
+        l_wh = self.wh_loss(whs, labels[:, [6, 7]])
         self.log_dict({'heat': l_heatmap,
                        'size': l_wh}, prog_bar=False)
 

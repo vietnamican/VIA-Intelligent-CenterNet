@@ -14,6 +14,8 @@ from models.backbone.vgg import VGG
 from models.backbone.mobilenetv2 import MobileNetV2, load_mobile_net
 from datasets import TrafficDataset
 
+cls = ['stop', 'left', 'right', 'straight', 'no_left', 'no_right']
+
 
 def load_data(args, val_only=False):
     if not val_only:
@@ -175,10 +177,11 @@ def decode(out):
 
     hm = hm.numpy()
     hm[hm < cfg.threshold] = 0
-    ys, xs = np.nonzero(hm)
+    cls, ys, xs = np.nonzero(hm)
     bboxes = []
     scores = []
-    for y, x in zip(ys, xs):
+    classes = []
+    for cl, y, x in zip(cls, ys, xs):
         w = wh[0][y, x]
         h = wh[1][y, x]
         width = np.exp(w)
@@ -190,19 +193,23 @@ def decode(out):
         bottom = y + height / 2
         bboxes.append([left, top, right, bottom])
         scores.append(hm[y, x])
+        classes.append(cl)
 
     bboxes = np.array(bboxes)
     if len(bboxes) == 0:
         return bboxes
     keep_indexes = nms(bboxes, scores, 0.4)
-    return bboxes[keep_indexes]
+    return bboxes[keep_indexes], classes[keep_indexes]
 
 
-def visualize(im_path, bboxes):
+def visualize(im_path, bboxes, classes):
     im = cv2.imread(im_path)
     im = cv2.resize(im, (240, 176))
-    for bbox in bboxes:
+    for bbox, cl in zip(bboxes, classes):
         left, top, right, bottom = bbox
         left, top, right, bottom = int(left), int(top), int(right), int(bottom)
         cv2.rectangle(im, (left, top), (right, bottom), (255, 0, 0), 2)
+        cv2.putText(im, cls[cl], (left, top), font=cv2.FONT_HERSHEY_SIMPLEX, bottomLeftCornerOfText=(
+            10, 500), fontScale=1, fontColor=(255, 255, 255), lineType=2)
+
     return im
