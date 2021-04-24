@@ -30,7 +30,7 @@ def load_data(args, val_only=False):
         traindataset = TrafficDataset(
             train_image_dir, train_label_dir, 'train')
         trainloader = DataLoader(traindataset, batch_size=batch_size,
-                                 pin_memory=True, num_workers=num_workers)
+                                 pin_memory=True, num_workers=num_workers, shuffle=True)
 
     valdataset = TrafficDataset(val_image_dir, val_label_dir, 'val')
     valloader = DataLoader(valdataset, batch_size=batch_size,
