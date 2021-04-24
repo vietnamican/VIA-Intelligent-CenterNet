@@ -55,8 +55,8 @@ class TrafficDataset(Dataset):
                          reps=(self.im_width, 1)).transpose()
 
         for cl, box in zip(cls, boxes):
-            if cl == 0:
-                break
+            # if cl == 0:
+            #     break
             x_ratio, y_ratio, width_ratio, height_ratio = box
             x = round(x_ratio * self.im_width)
             y = round(y_ratio * self.im_height)

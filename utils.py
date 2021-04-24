@@ -192,13 +192,17 @@ def decode(out):
         right = x + width / 2
         bottom = y + height / 2
         bboxes.append([left, top, right, bottom])
-        scores.append(hm[y, x])
+        scores.append(hm[cl, y, x])
         classes.append(cl)
 
-    bboxes = np.array(bboxes)
+    bboxes = np.array(bboxes)   
+    scores = np.array(scores)
+    classes = np.array(classes)
     if len(bboxes) == 0:
+        print('no_bbox')
         return bboxes
     keep_indexes = nms(bboxes, scores, 0.4)
+    print(classes[keep_indexes])
     return bboxes[keep_indexes], classes[keep_indexes]
 
 
@@ -209,7 +213,9 @@ def visualize(im_path, bboxes, classes):
         left, top, right, bottom = bbox
         left, top, right, bottom = int(left), int(top), int(right), int(bottom)
         cv2.rectangle(im, (left, top), (right, bottom), (255, 0, 0), 2)
-        cv2.putText(im, cls[cl], (left, top), font=cv2.FONT_HERSHEY_SIMPLEX, bottomLeftCornerOfText=(
-            10, 500), fontScale=1, fontColor=(255, 255, 255), lineType=2)
+        # cv2.putText(im, cls[cl], (left, top), fontFace=cv2.FONT_HERSHEY_SIMPLEX, bottomLeftCornerOfText=(
+        #     10, 500), fontScale=1, fontColor=(255, 255, 255), lineType=2)
+        cv2.putText(im, cls[cl], (left, top), cv2.FONT_HERSHEY_SIMPLEX, 
+                   1, (0, 0, 0), 1, cv2.LINE_AA)
 
     return im
