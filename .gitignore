@@ -28,6 +28,7 @@ share/python-wheels/
 MANIFEST
 
 via-trafficsign-20210321.zip
+via-trafficsign.zip
 via-trafficsign/
 *_logs/
 checkpoint*
