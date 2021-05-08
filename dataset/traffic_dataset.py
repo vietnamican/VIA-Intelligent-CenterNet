@@ -10,10 +10,11 @@ from .data_augment import _resize_subtract_mean
 transformerr = A.Compose(
     [
         A.HorizontalFlip(p=0.5),  ## Becareful when using that, because the keypoint is flipped but the index is flipped too
-        # A.ColorJitter(brightness=0.35, contrast=0.5,
-        #               saturation=0.5, hue=0.2, always_apply=False, p=0.7),
-        # A.ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.25, rotate_limit=30,
-        #                    interpolation=1, border_mode=4, always_apply=False, p=1)
+        A.ColorJitter(brightness=0.35, contrast=0.5,
+                      saturation=0.5, hue=0.2, always_apply=False, p=0.7),
+        A.ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.25, rotate_limit=30,
+                           interpolation=1, border_mode=4, always_apply=False, p=1),
+        A.RandomSizedBBoxSafeCrop(height=240, width=320)
 
     ],
     bbox_params=A.BboxParams(format='yolo')
