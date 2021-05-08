@@ -34,3 +34,4 @@ via-trafficsign/
 checkpoint*
 result*/
 test.py
+weights/

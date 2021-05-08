@@ -59,10 +59,11 @@ label_dir = args.label_dir
 save_folder = args.save_folder
 
 
-dataset = TrafficDataset(img_dir, label_dir, preproc(img_dim, rgb_mean), augment=False)
+dataset = TrafficDataset(img_dir, label_dir, preproc(img_dim, rgb_mean), augment=True)
 dataloader = data.DataLoader(
     dataset, batch_size, shuffle=True, collate_fn=detection_collate)
 
 for img, target in tqdm(dataloader):
-    print(target)
-    # pass
+    print(img.shape)
+    # print(target)
+    pass
