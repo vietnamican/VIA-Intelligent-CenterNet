@@ -94,7 +94,7 @@ def matrix_iof(a, b):
 
 
 # def match(threshold, truths, priors, variances, labels, landms, loc_t, conf_t, landm_t, idx):
-def match(threshold, truths, priors, variances, labels, loc_t, conf_t, landm_t, idx):
+def match(threshold, truths, priors, variances, labels, loc_t, conf_t, idx):
     """Match each prior box with the ground truth box of the highest jaccard
     overlap, encode the bounding boxes, then return the matched indices
     corresponding to both confidence and location preds.

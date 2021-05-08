@@ -53,8 +53,6 @@ class MultiBoxLoss(nn.Module):
             ground_truth (tensor): Ground truth boxes and labels for a batch,
                 shape: [batch_size,num_objs,5] (last idx is the label).
         """
-
-        # loc_data, conf_data, landm_data = predictions
         loc_data, conf_data = predictions
         priors = priors
         num = loc_data.size(0)
@@ -62,34 +60,15 @@ class MultiBoxLoss(nn.Module):
 
         # match priors (default boxes) and ground truth boxes
         loc_t = torch.Tensor(num, num_priors, 4)
-        landm_t = torch.Tensor(num, num_priors, 10)
         conf_t = torch.LongTensor(num, num_priors)
-        # print(conf_t)
         for idx in range(num):
             truths = targets[idx][:, :4].data
             labels = targets[idx][:, -1].data
-            landms = targets[idx][:, 4:14].data
             defaults = priors.data
-            # match(self.threshold, truths, defaults, self.variance, labels, landms, loc_t, conf_t, landm_t, idx)
-            match(self.threshold, truths, defaults, self.variance, labels, loc_t, conf_t, landm_t, idx)
-        if GPU:
-            loc_t = loc_t.to('cpu')
-            conf_t = conf_t.to('cpu')
-            landm_t = landm_t.to('cpu')
-        zeros = torch.tensor(0).to('cpu')
-        # landm Loss (Smooth L1)
-        # Shape: [batch,num_priors,10]
-        pos1 = conf_t > zeros
-        num_pos_landm = pos1.long().sum(1, keepdim=True)
-        N1 = max(num_pos_landm.data.sum().float(), 1)
-        # pos_idx1 = pos1.unsqueeze(pos1.dim()).expand_as(landm_data)
-        # landm_p = landm_data[pos_idx1].view(-1, 10)
-        # landm_t = landm_t[pos_idx1].view(-1, 10)
-        # loss_landm = F.smooth_l1_loss(landm_p, landm_t, reduction='sum')
+            match(self.threshold, truths, defaults, self.variance, labels, loc_t, conf_t, idx)
 
-
+        zeros = torch.tensor(0)
         pos = conf_t != zeros
-        conf_t[pos] = 1
 
         # Localization Loss (Smooth L1)
         # Shape: [batch,num_priors,4]
@@ -122,7 +101,4 @@ class MultiBoxLoss(nn.Module):
         N = max(num_pos.data.sum().float(), 1)
         loss_l /= N
         loss_c /= N
-        # loss_landm /= N1
-
-        # return loss_l, loss_c, loss_landm
         return loss_l, loss_c

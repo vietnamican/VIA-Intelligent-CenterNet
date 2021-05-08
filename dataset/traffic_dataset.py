@@ -77,7 +77,7 @@ class TrafficDataset(data.Dataset):
             annotation[0, 1] = label[1] - label[3] / 2 # y1
             annotation[0, 2] = label[0] + label[2] / 2  # x2
             annotation[0, 3] = label[1] + label[3] / 2 # y2
-            annotation[0, 4] = label[4]
+            annotation[0, 4] = label[4] + 1
             annotation[annotation < 0] = 0
             annotations = np.append(annotations, annotation, axis=0)
         target = np.array(annotations)

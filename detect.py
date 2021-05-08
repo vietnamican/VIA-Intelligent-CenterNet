@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(description='Retinaface')
 
 # parser.add_argument('-m', '--trained_model', default='./weights/Resnet50_Final.pth',
 #                     type=str, help='Trained state_dict file path to open')
-parser.add_argument('-m', '--trained_model', default='./weights/mobilenet0.25_epoch_10.pth',
+parser.add_argument('-m', '--trained_model', default='./weights/mobilenet0.25_epoch_50.pth',
                     type=str, help='Trained state_dict file path to open')
 # parser.add_argument('--network', default='resnet50', help='Backbone network mobile0.25 or resnet50')
 parser.add_argument('--network', default='mobile0.25', help='Backbone network mobile0.25 or resnet50')
