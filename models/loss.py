@@ -9,11 +9,9 @@ class PointLoss(nn.Module):
         self.loss = nn.MSELoss(reduction='sum')
 
     def forward(self, pred, gt):
-        mask = gt.gt(0)
-        pred = pred[mask]
-        gt = gt[mask]
-        loss = self.loss(pred, gt)
-        loss = loss / (mask.float().sum() + 1e-4)
+        mask = gt.gt(0).float()
+        loss = self.loss(pred * mask, gt)
+        loss = loss / (mask.sum() + 1e-4)
         return loss
 
 
@@ -24,9 +22,7 @@ class RegLoss(nn.Module):
         self.loss = nn.SmoothL1Loss(reduction='sum')
 
     def forward(self, pred, gt):
-        mask = gt.gt(0)
-        pred = pred[mask]
-        gt = gt[mask]
-        loss = self.loss(pred, gt)
-        loss = loss / (mask.float().sum() + 1e-4)
+        mask = gt.gt(0).float()
+        loss = self.loss(pred * mask, gt)
+        loss = loss / (mask.sum() + 1e-4)
         return loss

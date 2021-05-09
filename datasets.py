@@ -1,4 +1,5 @@
 import os
+from tqdm import tqdm
 
 import numpy as np
 import cv2
@@ -28,7 +29,7 @@ class TrafficDataset(Dataset):
         super().__init__()
         self.im_names = []
         self.annos = []
-        self.sigma = 2.65
+        self.sigma = 10
         self.parse_data(im_folder, anno_folder)
 
         # Hard code for via-hello dataset
@@ -45,7 +46,7 @@ class TrafficDataset(Dataset):
         im = im[2:-2, :]
         im = self.transformer(im)
         hm = self._make_heatmap(im, cls, boxes)
-        return im, hm, im_path
+        return im, hm
 
     def _make_heatmap(self, im, cls, boxes):
         res = np.zeros([8, self.im_height, self.im_width], dtype=np.float32)
@@ -55,8 +56,6 @@ class TrafficDataset(Dataset):
                          reps=(self.im_width, 1)).transpose()
 
         for cl, box in zip(cls, boxes):
-            # if cl == 0:
-            #     break
             x_ratio, y_ratio, width_ratio, height_ratio = box
             x = round(x_ratio * self.im_width)
             y = round(y_ratio * self.im_height)
@@ -69,7 +68,7 @@ class TrafficDataset(Dataset):
             res[7][y, x] = np.log(height + 1e-4)
 
             heatmap = np.exp(-0.5 * grid_dist / self.sigma ** 2)
-            heatmap[grid_dist > width ** 2 + height ** 2] = 0
+            heatmap[grid_dist > 4 * width ** 2 + 4 * height ** 2] = 0
             res[cl] = np.maximum(heatmap, res[cl])
 
         return res
@@ -101,11 +100,16 @@ class TrafficDataset(Dataset):
 if __name__ == '__main__':
     image_folder = os.path.join('via-trafficsign', 'images', 'train')
     anno_folder = os.path.join('via-trafficsign', 'labels', 'train')
+    out_dir = 'heatmaps'
     dataset = TrafficDataset(image_folder, anno_folder)
     dataloader = DataLoader(dataset, batch_size=1)
-    for im, hm in dataloader:
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    for i, (im, hm) in tqdm(enumerate(dataloader)):
         with torch.no_grad():
             hm.squeeze_()
-            hm[hm > 0] = 1
-            np.savetxt('temp.txt', hm[0])
-            break
+            for j, h in enumerate(hm[:-2]):
+                h *= 255
+                h = np.array(h, dtype=np.uint8)
+                if np.any(h):
+                    cv2.imwrite(os.path.join(out_dir, '{}_{}.jpg'.format(i, j)), h)

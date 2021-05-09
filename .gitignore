@@ -33,3 +33,6 @@ via-trafficsign/
 checkpoint*
 result*/
 test.py
+out*/
+weights*/
+*.zip
