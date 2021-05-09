@@ -5,7 +5,7 @@ import cv2
 import torch
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
 from pytorch_lightning.loggers import TensorBoardLogger
 
 from config import Config as cfg
@@ -56,7 +56,7 @@ def load_trainer(args):
         save_dir=os.getcwd(),
         name=logdir,
     )
-
+    lr_monitor = LearningRateMonitor(log_momentum=True)
     loss_callback = ModelCheckpoint(
         monitor='val_loss',
         dirpath='',
@@ -64,7 +64,7 @@ def load_trainer(args):
         save_top_k=-1,
         mode='min',
     )
-    callbacks = [loss_callback]
+    callbacks = [loss_callback, lr_monitor]
     device = args.device
     max_epochs = args.epochs
     resume_from_checkpoint = args.checkpoint
@@ -195,7 +195,7 @@ def decode(out):
         scores.append(hm[cl, y, x])
         classes.append(cl)
 
-    bboxes = np.array(bboxes)   
+    bboxes = np.array(bboxes)
     scores = np.array(scores)
     classes = np.array(classes)
     if len(bboxes) == 0:
@@ -215,7 +215,7 @@ def visualize(im_path, bboxes, classes):
         cv2.rectangle(im, (left, top), (right, bottom), (255, 0, 0), 2)
         # cv2.putText(im, cls[cl], (left, top), fontFace=cv2.FONT_HERSHEY_SIMPLEX, bottomLeftCornerOfText=(
         #     10, 500), fontScale=1, fontColor=(255, 255, 255), lineType=2)
-        cv2.putText(im, cls[cl], (left, top), cv2.FONT_HERSHEY_SIMPLEX, 
-                   1, (0, 0, 0), 1, cv2.LINE_AA)
+        cv2.putText(im, cls[cl], (left, top), cv2.FONT_HERSHEY_SIMPLEX,
+                    1, (0, 0, 0), 1, cv2.LINE_AA)
 
     return im
