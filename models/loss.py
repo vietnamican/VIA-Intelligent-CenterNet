@@ -11,7 +11,7 @@ class PointLoss(nn.Module):
     def forward(self, pred, gt):
         mask = gt.gt(0)
         pred_ = pred[mask]
-        gt_ = pred[gt]
+        gt_ = gt[mask]
         loss = self.loss(pred_, gt_)
         loss = loss / (mask.float().sum() + 1e-4)
         return loss
