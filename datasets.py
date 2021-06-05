@@ -1,5 +1,4 @@
 import os
-from tqdm import tqdm
 
 import numpy as np
 import cv2
@@ -29,7 +28,7 @@ class TrafficDataset(Dataset):
         super().__init__()
         self.im_names = []
         self.annos = []
-        self.sigma = 10
+        self.sigma = 2.65
         self.parse_data(im_folder, anno_folder)
 
         # Hard code for via-hello dataset
@@ -41,21 +40,23 @@ class TrafficDataset(Dataset):
 
     def __getitem__(self, idx):
         im_path = self.im_names[idx]
-        cls, boxes = self.annos[idx][:, 0].astype(np.int), self.annos[idx][:, 1:5]
+        cls, boxes = self.annos[idx][:, 0], self.annos[idx][:, 1:5]
         im = cv2.imread(im_path)
         im = im[2:-2, :]
         im = self.transformer(im)
         hm = self._make_heatmap(im, cls, boxes)
-        return im, hm
+        return im, hm, im_path
 
     def _make_heatmap(self, im, cls, boxes):
-        res = np.zeros([8, self.im_height, self.im_width], dtype=np.float32)
+        res = np.zeros([3, self.im_height, self.im_width], dtype=np.float32)
 
         grid_x = np.tile(np.arange(self.im_width), reps=(self.im_height, 1))
         grid_y = np.tile(np.arange(self.im_height),
                          reps=(self.im_width, 1)).transpose()
 
         for cl, box in zip(cls, boxes):
+            if cl == 0:
+                break
             x_ratio, y_ratio, width_ratio, height_ratio = box
             x = round(x_ratio * self.im_width)
             y = round(y_ratio * self.im_height)
@@ -64,12 +65,14 @@ class TrafficDataset(Dataset):
 
             grid_dist = (grid_x - x) ** 2 + (grid_y - y) ** 2
 
-            res[6][y, x] = np.log(width + 1e-4)
-            res[7][y, x] = np.log(height + 1e-4)
+            res[1][y, x] = np.log(width + 1e-4)
+            res[2][y, x] = np.log(height + 1e-4)
 
             heatmap = np.exp(-0.5 * grid_dist / self.sigma ** 2)
-            heatmap[grid_dist > 4 * width ** 2 + 4 * height ** 2] = 0
-            res[cl] = np.maximum(heatmap, res[cl])
+            heatmap[grid_dist > width ** 2 + height ** 2] = 0
+            res[0] = np.maximum(heatmap, res[0])
+
+            
 
         return res
 
@@ -100,16 +103,11 @@ class TrafficDataset(Dataset):
 if __name__ == '__main__':
     image_folder = os.path.join('via-trafficsign', 'images', 'train')
     anno_folder = os.path.join('via-trafficsign', 'labels', 'train')
-    out_dir = 'heatmaps'
     dataset = TrafficDataset(image_folder, anno_folder)
     dataloader = DataLoader(dataset, batch_size=1)
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
-    for i, (im, hm) in tqdm(enumerate(dataloader)):
+    for im, hm in dataloader:
         with torch.no_grad():
             hm.squeeze_()
-            for j, h in enumerate(hm[:-2]):
-                h *= 255
-                h = np.array(h, dtype=np.uint8)
-                if np.any(h):
-                    cv2.imwrite(os.path.join(out_dir, '{}_{}.jpg'.format(i, j)), h)
+            hm[hm > 0] = 1
+            np.savetxt('temp.txt', hm[0])
+            break
