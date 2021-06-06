@@ -28,7 +28,7 @@ class TrafficDataset(Dataset):
         super().__init__()
         self.im_names = []
         self.annos = []
-        self.sigma = 2.65
+        self.sigma = 10
         self.parse_data(im_folder, anno_folder)
 
         # Hard code for via-hello dataset
