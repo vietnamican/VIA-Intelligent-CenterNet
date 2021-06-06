@@ -57,7 +57,6 @@ def load_trainer(args):
 
     loss_callback = ModelCheckpoint(
         monitor='val_loss',
-        dirpath='',
         filename='checkpoint-{epoch:02d}-{val_loss:.4f}',
         save_top_k=-1,
         mode='min',
@@ -80,6 +79,7 @@ def load_trainer(args):
             logger=logger,
             callbacks=callbacks,
             gpus=1,
+            precision=16,
             resume_from_checkpoint=resume_from_checkpoint
         )
     else:

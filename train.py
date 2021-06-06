@@ -28,7 +28,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--logdir', type=str, help='Choose logdir for tensorboard logger', default='traffic_logs/training')
     parser.add_argument('--epochs', type=int,
-                        help='max epoch for training', default=100)
+                        help='max epoch for training', default=90)
     parser.add_argument('--batch-size', type=int,
                         help='batch size for training, recommended greater than or equal to 16', default=32)
     parser.add_argument('--num-workers', type=int,

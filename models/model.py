@@ -57,8 +57,8 @@ class Model(CenterNet):
                        'size': l_wh}, prog_bar=False)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.SGD(
+        optimizer = torch.optim.Adam(
             self.parameters(), lr=0.0005, weight_decay=5e-4)
         lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
-            optimizer, milestones=[60, 80], gamma=0.1)
+            optimizer, milestones=[50, 100], gamma=0.1)
         return {'optimizer': optimizer, 'lr_scheduler': lr_scheduler}

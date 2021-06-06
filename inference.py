@@ -32,9 +32,9 @@ def load_model(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train network')
     parser.add_argument("--val-image-dir", type=str,
-                        help='Path to validation image folder', default='via-trafficsign/images/val')
+                        help='Path to validation image folder', default='../datasets/via-trafficsign/images/val')
     parser.add_argument("--val-label-dir", type=str,
-                        help='Path to validation image label folder', default='via-trafficsign/labels/val')
+                        help='Path to validation image label folder', default='../datasets/via-trafficsign/labels/val')
     parser.add_argument(
         "--device", type=str, help="Choose what device to train, one of the: ['cpu', 'gpu', 'tpu'], tpu is unavailable now", default='cpu')
     parser.add_argument(
@@ -66,8 +66,8 @@ if __name__ == '__main__':
         i += 1
         try:
             pred = detect(net, im)
-            bboxes, classes = decode(pred)
-            im = visualize(im_path, bboxes, classes)
+            bboxes = decode(pred)
+            im = visualize(im_path, bboxes)
             cv2.imwrite(os.path.join(outdir, '{}.jpg'.format(i)), im)
         except:
             pass

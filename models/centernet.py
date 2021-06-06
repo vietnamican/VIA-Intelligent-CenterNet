@@ -37,8 +37,13 @@ class CenterNet(Base):
         for head in self.heads:
             classes = self.heads[head]
             fc = nn.Conv2d(head_conv, classes,
-                           kernel_size=1, stride=1,
-                           padding=0, bias=True)
+                          kernel_size=1, stride=1,
+                          padding=0, bias=True)
+            if 'hm' in head:
+                fc.bias.data.fill_(-2.19)
+            else:
+                nn.init.normal_(fc.weight, std=0.001)
+                nn.init.constant_(fc.bias, 0)
             self.__setattr__(head, fc)
 
     def forward(self, x):

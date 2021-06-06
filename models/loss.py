@@ -10,9 +10,9 @@ class PointLoss(nn.Module):
 
     def forward(self, pred, gt):
         mask = gt.gt(0)
-        pred_ = pred[mask]
-        gt_ = gt[mask]
-        loss = self.loss(pred_, gt_)
+        pred = pred[mask]
+        gt = gt[mask]
+        loss = self.loss(pred, gt)
         loss = loss / (mask.float().sum() + 1e-4)
         return loss
 
@@ -25,8 +25,8 @@ class RegLoss(nn.Module):
 
     def forward(self, pred, gt):
         mask = gt.gt(0)
-        pred_ = pred[mask]
-        gt_ = gt[mask]
-        loss = self.loss(pred_, gt_)
+        pred = pred[mask]
+        gt = gt[mask]
+        loss = self.loss(pred, gt)
         loss = loss / (mask.float().sum() + 1e-4)
         return loss
