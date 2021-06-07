@@ -5,7 +5,7 @@ from ..base import Base, VGGBlock, ConvBatchNormRelu6
 class VGG(Base):
     def __init__(self):
         super().__init__()
-        self.channels = [32, 32, 64, 128, 256]
+        self.channels = [64, 128, 256]
         self.conv1 = ConvBatchNormRelu6(3, 32, 3, padding=1, bias=False)
         self.feature_1 = nn.Sequential(
             VGGBlock(32, 32, 2),
@@ -31,11 +31,7 @@ class VGG(Base):
 
     def forward(self, x):
         y = []
-        x = self.conv1(x)
-        y.append(x)
-        x = self.feature_1(x)
-        y.append(x)
-        x = self.feature_2(x)
+        x = self.feature_2(self.feature_1(self.conv1(x)))
         y.append(x)
         x = self.feature_3(x)
         y.append(x)

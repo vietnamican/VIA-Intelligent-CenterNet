@@ -117,6 +117,11 @@ def iou(box1, box2):
         (x22 - x12 + 1) * (y22 - y12 + 1) - overlap
     return overlap / 1.0 / overall
 
+def maxpool(heat, kernel):
+        padding = (kernel - 1) // 2
+        hmax = torch.nn.functional.max_pool2d(heat, kernel, stride=1, padding=padding)
+        keep = (hmax == heat).float()
+        return heat * keep
 
 def nms(boxes, scores, nms_thresh):
     x1 = boxes[:, 0]
@@ -169,9 +174,12 @@ def detect(net, im):
 
 def decode(out):
     hm = out['hm']
+    off = out['off']
     wh = out['wh']
+    hm = maxpool(hm, 11)
     hm.squeeze_()
     wh.squeeze_()
+    off.squeeze_()
 
     hm = hm.numpy()
     hm[hm < cfg.threshold] = 0
@@ -179,17 +187,23 @@ def decode(out):
     bboxes = []
     scores = []
     for y, x in zip(ys, xs):
+        scores.append(hm[y, x])
+
+        off_x = off[0][y, x]
+        off_y = off[1][y, x]
+
         w = wh[0][y, x]
         h = wh[1][y, x]
         width = np.exp(w)
         height = np.exp(h)
 
+        x = x + off_x
+        y = y + off_y
         left = x - width / 2
         top = y - height / 2
         right = x + width / 2
         bottom = y + height / 2
         bboxes.append([left, top, right, bottom])
-        scores.append(hm[y, x])
 
     bboxes = np.array(bboxes)
     if len(bboxes) == 0:
@@ -200,9 +214,11 @@ def decode(out):
 
 def visualize(im_path, bboxes):
     im = cv2.imread(im_path)
+    height, width = im.shape[:2]
     im = cv2.resize(im, (240, 176))
     for bbox in bboxes:
         left, top, right, bottom = bbox
         left, top, right, bottom = int(left), int(top), int(right), int(bottom)
         cv2.rectangle(im, (left, top), (right, bottom), (255, 0, 0), 2)
+    im = cv2.resize(im, (width, height))
     return im

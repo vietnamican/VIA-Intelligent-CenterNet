@@ -28,15 +28,15 @@ if __name__ == '__main__':
     parser.add_argument(
         '--logdir', type=str, help='Choose logdir for tensorboard logger', default='traffic_logs/training')
     parser.add_argument('--epochs', type=int,
-                        help='max epoch for training', default=90)
+                        help='max epoch for training', default=100)
     parser.add_argument('--batch-size', type=int,
-                        help='batch size for training, recommended greater than or equal to 16', default=32)
+                        help='batch size for training, recommended greater than or equal to 16', default=64)
     parser.add_argument('--num-workers', type=int,
                         help='number of workers for loading data', default=12)
     parser.add_argument('--checkpoint', type=str,
                         help='Path to checkpoint to load from', default=None)
     parser.add_argument(
-        '--backbone', type=str, help="Choose backbone for centernet, one of the ['mobilenet', 'vgg']", default='vgg')
+        '--backbone', type=str, help="Choose backbone for centernet, one of the ['mobilenet', 'vgg']", default='mobilenet')
 
     args = parser.parse_args()
 

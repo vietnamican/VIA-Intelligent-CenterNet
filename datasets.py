@@ -28,7 +28,8 @@ class TrafficDataset(Dataset):
         super().__init__()
         self.im_names = []
         self.annos = []
-        self.sigma = 10
+        self.sigma = 2.65
+        self.downscale = 4
         self.parse_data(im_folder, anno_folder)
 
         # Hard code for via-hello dataset
@@ -48,31 +49,47 @@ class TrafficDataset(Dataset):
         return im, hm, im_path
 
     def _make_heatmap(self, im, cls, boxes):
-        res = np.zeros([3, self.im_height, self.im_width], dtype=np.float32)
+        # 
+        # 0: heatmap
+        # 1, 2 : offset_x, offset_y
+        # 3, 4: width, height
+        scale = self.downscale
+        height = self.im_height // scale
+        width = self.im_width // scale
 
-        grid_x = np.tile(np.arange(self.im_width), reps=(self.im_height, 1))
-        grid_y = np.tile(np.arange(self.im_height),
-                         reps=(self.im_width, 1)).transpose()
+        res = np.zeros([5, height, width], dtype=np.float32)
+
+        grid_x = np.tile(np.arange(width), reps=(height, 1))
+        grid_y = np.tile(np.arange(height), reps=(width, 1)).transpose()
 
         for cl, box in zip(cls, boxes):
             if cl == 0:
                 break
+            # original information
             x_ratio, y_ratio, width_ratio, height_ratio = box
-            x = round(x_ratio * self.im_width)
-            y = round(y_ratio * self.im_height)
-            width = round(width_ratio * self.im_width)
-            height = round(height_ratio * self.im_height)
+            x = x_ratio * self.im_width
+            y = y_ratio * self.im_height
+            width = width_ratio * self.im_width
+            height = height_ratio * self.im_height
 
-            grid_dist = (grid_x - x) ** 2 + (grid_y - y) ** 2
+            # scaled information
+            x_scaled, y_scaled = round(x / scale), round(y / scale)
+            offset_x, offset_y = x / scale - x_scaled, y / scale - y_scaled
+            width_scaled, height_scaled = width / scale, height / scale
 
-            res[1][y, x] = np.log(width + 1e-4)
-            res[2][y, x] = np.log(height + 1e-4)
+            # offset
+            res[1][y_scaled, x_scaled] = offset_x
+            res[2][y_scaled, x_scaled] = offset_y
 
-            heatmap = np.exp(-0.5 * grid_dist / self.sigma ** 2)
-            heatmap[grid_dist > width ** 2 + height ** 2] = 0
-            res[0] = np.maximum(heatmap, res[0])
-
+            # wh
+            res[3][y_scaled, x_scaled] = np.log(width_scaled + 1e-4)
+            res[4][y_scaled, x_scaled] = np.log(height_scaled + 1e-4)
             
+            # hm
+            grid_dist = (grid_x - x_scaled) ** 2 + (grid_y - y_scaled) ** 2
+            heatmap = np.exp(-0.5 * grid_dist / self.sigma ** 2)
+            heatmap[grid_dist > width_scaled ** 2 + height_scaled ** 2] = 0
+            res[0] = np.maximum(heatmap, res[0])
 
         return res
 

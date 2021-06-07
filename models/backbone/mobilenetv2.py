@@ -47,11 +47,7 @@ class MobileNetV2(Base):
 
     def forward(self, x):
         y = []
-        x = self.first_conv(x)
-        y.append(x)
-        x = self.feature_1(x)
-        y.append(x)
-        x = self.feature_2(x)
+        x = self.feature_2(self.feature_1(self.first_conv(x)))
         y.append(x)
         x = self.feature_4(x)
         y.append(x)

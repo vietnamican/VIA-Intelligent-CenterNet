@@ -49,7 +49,7 @@ if __name__ == '__main__':
     parser.add_argument('--outdir', type=str,
                         help='Directory to save output result', required=True)
     parser.add_argument(
-        '--backbone', type=str, help="Choose backbone for centernet, one of the ['mobilenet', 'vgg']", default='vgg')
+        '--backbone', type=str, help="Choose backbone for centernet, one of the ['mobilenet', 'vgg']", default='mobilenet')
 
     args = parser.parse_args()
     args.batch_size = 1
@@ -61,13 +61,15 @@ if __name__ == '__main__':
         os.makedirs(outdir)
 
     i = 0
+    scale = 4
     for im, labels, im_path in tqdm(loader):
         im_path = im_path[0]
         i += 1
-        try:
-            pred = detect(net, im)
-            bboxes = decode(pred)
-            im = visualize(im_path, bboxes)
-            cv2.imwrite(os.path.join(outdir, '{}.jpg'.format(i)), im)
-        except:
-            pass
+        # try:
+        pred = detect(net, im)
+        bboxes = decode(pred)
+        bboxes *= scale
+        im = visualize(im_path, bboxes)
+        cv2.imwrite(os.path.join(outdir, '{}.jpg'.format(i)), im)
+        # except:
+        #     pass
