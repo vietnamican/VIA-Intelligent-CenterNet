@@ -1,4 +1,5 @@
 import os
+from tqdm import tqdm
 
 import numpy as np
 import cv2
@@ -21,6 +22,35 @@ transformer = {
     ])
 }
 
+def gaussian2D(shape, sigma=1):
+    m, n = [(ss - 1.) / 2. for ss in shape]
+    y, x = np.ogrid[-m:m+1,-n:n+1]
+
+    h = np.exp(-(x * x + y * y) / (2 * sigma * sigma))
+    h[h < np.finfo(h.dtype).eps * h.max()] = 0
+    return h
+
+def draw_gaussian(heatmap, center, radius, k=1):
+    diameter = 2 * radius + 1
+    gaussian = gaussian2D((diameter, diameter), sigma=diameter / 6)
+
+    x, y = center
+
+    height, width = heatmap.shape[0:2]
+    
+    left, right = min(x, radius), min(width - x, radius + 1)
+    top, bottom = min(y, radius), min(height - y, radius + 1)
+
+    left, right = max(left, 0), min(right, width - 1)
+    top, bottom = max(top, 0), min(bottom, height - 1)
+
+    masked_heatmap  = heatmap[y - top:y + bottom, x - left:x + right]
+    masked_gaussian = gaussian[radius - top:radius + bottom, radius - left:radius + right]
+    np.maximum(masked_heatmap, masked_gaussian * k, out=masked_heatmap)
+
+def gaussian_radius(det_size, min_overlap=0.7):
+    height, width = det_size
+    return round(np.sqrt(height**2 + width**2))
 
 class TraficDataset(Dataset):
     def __init__(self, im_folder, anno_folder, mode='train'):
@@ -44,32 +74,43 @@ class TraficDataset(Dataset):
         return im, hm, im_path
 
     def _make_heatmap(self, im, cls, boxes):
-        res = np.zeros([3, self.im_height, self.im_width], dtype=np.float32)
 
-        grid_x = np.tile(np.arange(self.im_width), reps=(self.im_height, 1))
-        grid_y = np.tile(np.arange(self.im_height),
-                         reps=(self.im_width, 1)).transpose()
+        # 
+        # 0: heatmap
+        # 1, 2 : offset_x, offset_y
+        # 3, 4: width, height
+        scale = self.downscale
+        height = self.im_height // scale
+        width = self.im_width // scale
 
+        res = np.zeros([5, height, width], dtype=np.float32)
+        
         for cl, box in zip(cls, boxes):
             if cl == 0:
                 break
             x_ratio, y_ratio, width_ratio, height_ratio = box
-            x = round(x_ratio * self.im_width)
-            y = round(y_ratio * self.im_height)
-            width = round(width_ratio * self.im_width)
-            height = round(height_ratio * self.im_height)
 
-            grid_dist = (grid_x - x) ** 2 + (grid_y - y) ** 2
+            x = x_ratio * self.im_width
+            y = y_ratio * self.im_height
+            width = width_ratio * self.im_width
+            height = height_ratio * self.im_height
 
-            res[1][y, x] = np.log(width + 1e-4)
-            res[2][y, x] = np.log(height + 1e-4)
+            # scaled information
+            x_scaled, y_scaled = round(x / scale), round(y / scale)
+            offset_x, offset_y = x / scale - x_scaled, y / scale - y_scaled
+            width_scaled, height_scaled = width / scale, height / scale
 
-            heatmap = np.exp(-0.5 * grid_dist / self.sigma ** 2)
-            heatmap[grid_dist > width ** 2 + height ** 2] = 0
-            res[0] = np.maximum(heatmap, res[0])
+            # offset
+            res[1][y_scaled, x_scaled] = offset_x
+            res[2][y_scaled, x_scaled] = offset_y
 
+            # wh
+            res[3][y_scaled, x_scaled] = np.log(width_scaled + 1e-4)
+            res[4][y_scaled, x_scaled] = np.log(height_scaled + 1e-4)
             
-
+            # hm
+            radius = round(gaussian_radius((height_scaled, width_scaled)))
+            draw_gaussian(res[0], (x_scaled, y_scaled), radius)
         return res
 
     def __len__(self):
@@ -101,9 +142,14 @@ if __name__ == '__main__':
     anno_folder = os.path.join('via-trafficsign', 'labels', 'train')
     dataset = TraficDataset(image_folder, anno_folder)
     dataloader = DataLoader(dataset, batch_size=1)
-    for im, hm in dataloader:
+    outdir = 'heatmap'
+    i = 0
+    for im, hm, *_ in tqdm(dataloader):
         with torch.no_grad():
             hm.squeeze_()
-            hm[hm > 0] = 1
-            np.savetxt('temp.txt', hm[0])
-            break
+            hm = hm[0]
+            print(type(hm))
+            hm *= 255
+            cv2.imwrite(os.path.join(outdir, "{}.jpg".format(i)), hm.numpy().astype(np.uint8))
+        i += 1
+        break
