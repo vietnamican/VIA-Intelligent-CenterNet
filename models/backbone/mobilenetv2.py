@@ -13,10 +13,13 @@ model_urls = {
 
 
 class MobileNetV2(Base):
-    def __init__(self, width_mult=1.0, round_nearest=8,):
+    def __init__(self):
         super(MobileNetV2, self).__init__()
+        self.channels = [32, 24, 32, 96, 320]
+        self.first_conv = nn.Sequential(
+            ConvBNReLU(3, 32, stride=1),
+        )
         self.feature_1 = nn.Sequential(
-            ConvBNReLU(3, 32, stride=2),
             InvertedResidual(32, 16, 1, 1),
             InvertedResidual(16, 24, 2, 6),
             InvertedResidual(24, 24, 1, 6),
@@ -44,11 +47,17 @@ class MobileNetV2(Base):
 
     def forward(self, x):
         y = []
-        x = self.feature_1(x)
-        y.append(x)
-        x = self.feature_2(x)
+        x = self.feature_2(self.feature_1(self.first_conv(x)))
         y.append(x)
         x = self.feature_4(x)
         y.append(x)
         y.append(self.feature_6(x))
         return y
+
+def load_mobile_net(pretrained=True):
+    model = MobileNetV2()
+    if pretrained:
+        state_dict = model_zoo.load_url(model_urls['mobilenet_v2'],
+                                              progress=True)
+        model.migrate(state_dict, force=True, verbose=1)
+    return model

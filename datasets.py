@@ -7,6 +7,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms as T
 
+# Hard code for via-hello dataset
 transformer = {
     'train': T.Compose([
         T.ToPILImage(),
@@ -52,16 +53,20 @@ def gaussian_radius(det_size, min_overlap=0.7):
     height, width = det_size
     return round(np.sqrt(height**2 + width**2))
 
-class TraficDataset(Dataset):
+class TrafficDataset(Dataset):
     def __init__(self, im_folder, anno_folder, mode='train'):
         super().__init__()
         self.im_names = []
         self.annos = []
         self.sigma = 2.65
+        self.downscale = 4
         self.parse_data(im_folder, anno_folder)
+
+        # Hard code for via-hello dataset
         self.orig_im_height = 180
         self.im_height = 176
         self.im_width = 240
+
         self.transformer = transformer[mode]
 
     def __getitem__(self, idx):
@@ -88,6 +93,7 @@ class TraficDataset(Dataset):
         for cl, box in zip(cls, boxes):
             if cl == 0:
                 break
+            # original information
             x_ratio, y_ratio, width_ratio, height_ratio = box
 
             x = x_ratio * self.im_width
@@ -140,7 +146,7 @@ class TraficDataset(Dataset):
 if __name__ == '__main__':
     image_folder = os.path.join('via-trafficsign', 'images', 'train')
     anno_folder = os.path.join('via-trafficsign', 'labels', 'train')
-    dataset = TraficDataset(image_folder, anno_folder)
+    dataset = TrafficDataset(image_folder, anno_folder)
     dataloader = DataLoader(dataset, batch_size=1)
     outdir = 'heatmap'
     i = 0

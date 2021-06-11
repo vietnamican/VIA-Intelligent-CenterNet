@@ -1,77 +1,46 @@
 import os
 import os.path as osp
+import argparse
 
 import torch
 from torch.utils.data import DataLoader
-import torch.utils.model_zoo as model_zoo
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 
-from config import Config as cfg
-from models.model import Model
-from models.backbone.vgg import VGG
-from datasets import TraficDataset
+from utils import load_data, load_trainer, load_model 
 
 pl.seed_everything(42)
 
-# Data Setup
-traindataset = TraficDataset('via-trafficsign/images/train', 'via-trafficsign/labels/train', 'train')
-trainloader = DataLoader(traindataset, batch_size=cfg.batch_size,
-                        pin_memory=cfg.pin_memory, num_workers=cfg.num_workers)
 
-valdataset = TraficDataset('via-trafficsign/images/val', 'via-trafficsign/labels/val', 'val')
-valloader = DataLoader(valdataset, batch_size=cfg.batch_size,
-                        pin_memory=cfg.pin_memory, num_workers=cfg.num_workers)
-device = 'cpu'
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Train network')
+    parser.add_argument("--train-image-dir", type=str,
+                        help='Path to training image folder', default='../datasets/via-trafficsign/images/train')
+    parser.add_argument("--train-label-dir", type=str,
+                        help='Path to training image label folder', default='../datasets/via-trafficsign/labels/train')
+    parser.add_argument("--val-image-dir", type=str,
+                        help='Path to validation image folder', default='../datasets/via-trafficsign/images/val')
+    parser.add_argument("--val-label-dir", type=str,
+                        help='Path to validation image label folder', default='../datasets/via-trafficsign/labels/val')
+    parser.add_argument(
+        "--device", type=str, help="Choose what device to train, one of the: ['cpu', 'gpu', 'tpu'], tpu is unavailable now", default='cpu')
+    parser.add_argument(
+        '--logdir', type=str, help='Choose logdir for tensorboard logger', default='traffic_logs/training')
+    parser.add_argument('--epochs', type=int,
+                        help='max epoch for training', default=100)
+    parser.add_argument('--batch-size', type=int,
+                        help='batch size for training, recommended greater than or equal to 16', default=64)
+    parser.add_argument('--num-workers', type=int,
+                        help='number of workers for loading data', default=12)
+    parser.add_argument('--checkpoint', type=str,
+                        help='Path to checkpoint to load from', default=None)
+    parser.add_argument(
+        '--backbone', type=str, help="Choose backbone for centernet, one of the ['mobilenet', 'vgg']", default='mobilenet')
 
-# traindataset = TraficDataset('/content/via-trafficsign/images/train', '/content/via-trafficsign/labels/train', 'train')
-# trainloader = DataLoader(traindataset, batch_size=cfg.batch_size,
-#                         pin_memory=cfg.pin_memory, num_workers=cfg.num_workers)
+    args = parser.parse_args()
 
-# valdataset = TraficDataset('/content/via-trafficsign/images/val', '/content/via-trafficsign/labels/val', 'val')
-# valloader = DataLoader(valdataset, batch_size=cfg.batch_size,
-#                         pin_memory=cfg.pin_memory, num_workers=cfg.num_workers)
-# device = 'gpu'
-
-net = Model(VGG)
-
-log_name = 'traffic_logs/training'
-logger = TensorBoardLogger(
-    save_dir=os.getcwd(),
-    name=log_name,
-    # log_graph=True,
-    # version=0
-)
-
-loss_callback = ModelCheckpoint(
-    monitor='val_loss',
-    dirpath='',
-    filename='checkpoint-{epoch:02d}-{val_loss:.4f}',
-    save_top_k=-1,
-    mode='min',
-)
-callbacks = [loss_callback]
-
-if device == 'tpu':
-    trainer = pl.Trainer(
-        max_epochs=90,
-        logger=logger,
-        callbacks=callbacks,
-        tpu_cores=8
-    )
-elif device == 'gpu':
-    trainer = pl.Trainer(
-        max_epochs=90,
-        logger=logger,
-        callbacks=callbacks,
-        gpus=1
-    )
-else:
-    trainer = pl.Trainer(
-        max_epochs=90,
-        logger=logger,
-        callbacks=callbacks,
-    )
-
-trainer.fit(net, trainloader, valloader)
+    _, trainloader, _, valloader = load_data(args)
+    model = load_model(args)
+    trainer = load_trainer(args)
+    trainer.fit(model, trainloader, valloader)

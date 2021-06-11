@@ -1,5 +1,4 @@
 from torch import nn
-import torch.utils.model_zoo as model_zoo
 import math
 
 
