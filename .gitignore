@@ -37,3 +37,4 @@ out*/
 weights*/
 *.zip
 *test*
+build/
