@@ -23,7 +23,9 @@ class CenterFace{
 public:
     CenterFace(const std::string &bin_path, const std::string &param_path, int input_width, int input_length, float score_threshold_ = 0.7, float iou_threshold_ = 0.3, int topk_ = -1);
     ~CenterFace();
-    void detect(ncnn::Mat &img);
+    void detect(ncnn::Mat &img, ncnn::Mat &scores, ncnn::Mat &off, ncnn::Mat &wh);
+    void decode(ncnn::Mat &scores, ncnn::Mat off, ncnn::Mat wh);
+    void nms(std::vector<BoxInfo> &box_info);
     // void decode();
 private:
     ncnn::Net centerFace;
