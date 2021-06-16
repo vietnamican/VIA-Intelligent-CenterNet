@@ -23,6 +23,7 @@ class CenterFace{
 public:
     CenterFace(const std::string &bin_path, const std::string &param_path, int input_width, int input_length, float score_threshold_ = 0.7, float iou_threshold_ = 0.3, int topk_ = -1);
     ~CenterFace();
+    void detect(ncnn::Mat &img);
     // void decode();
 private:
     ncnn::Net centerFace;
