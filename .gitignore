@@ -38,3 +38,4 @@ weights*/
 *.zip
 *test*
 build/
+convert.py
