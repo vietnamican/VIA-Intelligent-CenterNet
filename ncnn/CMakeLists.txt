@@ -16,8 +16,6 @@ project(Ultra-Light-Fast-Generic-Face-Detector-1MB)
 
 add_subdirectory(../../ncnn ncnn_build)
 include_directories(../../ncnn/src)
-# add_library(centerface SHARED main)
-
 
 find_package(OpenCV REQUIRED)
 

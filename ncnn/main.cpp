@@ -16,6 +16,14 @@ int main(int argc, char **argv){
     ncnn::Mat off;
     ncnn::Mat wh;
     centerface.detect(ncnnimg, scores, off, wh);
-    centerface.decode(scores, off, wh);
+    vector<BoxInfo> boxes;
+    centerface.decode(boxes, scores, off, wh);
+    centerface.visualize(cvimg, boxes, 4);
+    cv::imshow("Display window", cvimg);
+    int k = cv::waitKey(0); // Wait for a keystroke in the window
+    if(k == 's')
+    {
+        cv::imwrite("starry_night.png", cvimg);
+    }
     return 0;
 }

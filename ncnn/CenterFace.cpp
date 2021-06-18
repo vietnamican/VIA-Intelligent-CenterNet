@@ -59,7 +59,7 @@ void CenterFace::detect(ncnn::Mat &img, ncnn::Mat &scores, ncnn::Mat &off, ncnn:
     ex.extract("541", wh);
 }
 
-void CenterFace::decode(ncnn::Mat &scores, ncnn::Mat off, ncnn::Mat wh){
+void CenterFace::decode(vector<BoxInfo> &boxes, ncnn::Mat &scores, ncnn::Mat off, ncnn::Mat wh){
     int c = scores.c;
     int h = scores.h;
     int w = scores.w;
@@ -97,6 +97,7 @@ void CenterFace::decode(ncnn::Mat &scores, ncnn::Mat off, ncnn::Mat wh){
         }
     }
     nms(box_info);
+    boxes = box_info;
 }
 
 void CenterFace::nms(vector<BoxInfo> &box_info){
@@ -142,6 +143,14 @@ void CenterFace::nms(vector<BoxInfo> &box_info){
         }
     }
     box_info = output;
+}
+
+void CenterFace::visualize(cv::Mat &img, std::vector<BoxInfo> box_info, float scale_factor){
+    for(auto it = box_info.begin(); it != box_info.end(); ++it){
+        cv::Point topleft = cv::Point(it->x1 * scale_factor, it->y1 * scale_factor);
+        cv::Point bottomright = cv::Point(it->x2 * scale_factor, it->y2 * scale_factor);
+        cv::rectangle(img, topleft, bottomright, cv::Scalar(0, 255, 0));
+    }
 }
 
 
